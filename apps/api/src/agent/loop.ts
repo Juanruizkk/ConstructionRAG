@@ -11,7 +11,10 @@ RULES:
 - If the tools do not have the answer, say so plainly. Do not fabricate.
 - Cite your sources: reference the activity_nr / incident returned by tools.
 - If a contractor is not found, say "No OSHA record found — this does NOT mean the sub is safe."
-- Data scope is construction (NAICS 23) in CA, TX and NY. If asked outside that, say so.`;
+- Data scope is construction (NAICS 23) in CA, TX and NY. If asked outside that, say so.
+FORMATTING:
+- Reply in clean GitHub-flavored Markdown (use tables for lists of subs, **bold** for key figures).
+- Do NOT use footnote markers like 【0】 or [1]. Cite inline by naming the activity_nr or incident number in prose.`;
 
 export interface AgentInput {
   provider: LLMProvider;

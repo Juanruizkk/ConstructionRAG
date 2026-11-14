@@ -101,7 +101,23 @@ button.primary:hover { background: linear-gradient(180deg, #4079e0, #335fb8); }
 .msg-user { text-align: right; }
 .bubble { display: inline-block; text-align: left; padding: 9px 13px; border-radius: 12px; max-width: 92%; white-space: pre-wrap; font-size: 0.92rem; }
 .msg-user .bubble { background: #2a4b84; }
-.msg-assistant .bubble { background: var(--panel); border: 1px solid var(--border); }
+.msg-assistant .bubble { background: var(--panel); border: 1px solid var(--border); display: block; max-width: 100%; white-space: normal; }
+
+/* rendered markdown in assistant replies */
+.md { font-size: 0.9rem; }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0.45rem 0; }
+.md h1, .md h2, .md h3 { font-size: 0.98rem; margin: 0.6rem 0 0.3rem; color: #dfe3ea; }
+.md ul, .md ol { margin: 0.4rem 0; padding-left: 1.2rem; }
+.md li { margin: 0.15rem 0; }
+.md strong { color: #fff; }
+.md code { background: #0d0f14; border: 1px solid var(--border); padding: 1px 5px; border-radius: 5px; font-size: 0.85em; }
+.md a { color: var(--accent); }
+.md table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.8rem; }
+.md th, .md td { border: 1px solid var(--border); padding: 5px 9px; text-align: left; white-space: nowrap; }
+.md thead th { background: var(--panel-2); color: #dfe3ea; }
+.md tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
 .cites { margin-top: 5px; font-size: 0.75rem; }
 .cites a { color: var(--accent); margin-right: 8px; }
 a { color: var(--accent); }

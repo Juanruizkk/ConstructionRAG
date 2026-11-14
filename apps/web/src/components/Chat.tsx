@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { chat, type Citation } from '../lib/api.js';
 
 interface Msg { role: 'user' | 'assistant'; text: string; citations?: Citation[] }
@@ -40,7 +42,20 @@ export function Chat({ bidId, bidName }: { bidId: number; bidName: string }) {
         )}
         {msgs.map((m, i) => (
           <div key={i} className={`msg msg-${m.role}`}>
-            <div className="bubble">{m.text}</div>
+            <div className="bubble">
+              {m.role === 'assistant'
+                ? (
+                  <div className="md">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{ a: (props) => <a {...props} target="_blank" rel="noreferrer" /> }}
+                    >
+                      {m.text}
+                    </ReactMarkdown>
+                  </div>
+                )
+                : m.text}
+            </div>
             {m.citations && m.citations.length > 0 && (
               <div className="cites">
                 {m.citations.map((c, j) => (
