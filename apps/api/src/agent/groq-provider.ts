@@ -3,7 +3,7 @@ import type {
   AssistantTurn, ChatMessage, LLMProvider, ToolSpec,
 } from './llm-provider.js';
 
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b';
 
 export class GroqProvider implements LLMProvider {
   readonly name = `groq:${MODEL}`;
