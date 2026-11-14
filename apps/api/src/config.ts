@@ -11,7 +11,7 @@ export const SCOPE = {
   naicsPrefix: '23',
   // ~10 years back; verify the API's accepted date format during impl.
   openDateFrom: '2015-01-01',
-  batchSize: 200,          // activity_nr / summary_nr per `in` request
+  batchSize: 100,          // activity_nr / summary_nr per `in` request (URL length: 200 trips a 403 WAF cap)
   pageLimit: 5_000,        // keep page payload under the API's 6 MB cap
 };
 
