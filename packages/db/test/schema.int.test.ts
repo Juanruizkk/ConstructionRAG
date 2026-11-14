@@ -7,6 +7,7 @@ const sql = postgres(url!, { max: 1 });
 
 beforeAll(async () => {
   if (!url) throw new Error('DATABASE_URL is not set (start docker compose + set env)');
+  await sql`DROP SCHEMA IF EXISTS drizzle CASCADE`;
   await sql`DROP SCHEMA public CASCADE`;
   await sql`CREATE SCHEMA public`;
   await runMigrations(url);
