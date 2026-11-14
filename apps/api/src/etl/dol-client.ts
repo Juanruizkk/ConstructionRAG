@@ -38,19 +38,25 @@ async function fetchPage(
   let attempt = 0;
   for (;;) {
     await throttle();
-    const res = await fetch(url);
-    if (res.ok) {
-      const body = (await res.json()) as { data?: Record<string, unknown>[] };
-      const rows = body.data ?? [];
-      await writeCache(path, rows);
-      return rows;
+    let transient = false;
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const text = await res.text();
+        const body = JSON.parse(text) as { data?: Record<string, unknown>[] }; // may throw on truncated body
+        const rows = body.data ?? [];
+        await writeCache(path, rows);
+        return rows;
+      }
+      if (res.status === 429 || res.status >= 500) transient = true;
+      else throw new Error(`DOL ${endpoint} offset=${offset} -> ${res.status} ${await res.text()}`);
+    } catch (err) {
+      // Retry transient network / truncated-JSON errors; rethrow hard failures.
+      if (!transient && !(err instanceof SyntaxError) && !(err instanceof TypeError)) throw err;
     }
-    if ((res.status === 429 || res.status >= 500) && attempt < 8) {
-      await sleep(Math.min(2 ** attempt * 500, 30_000));
-      attempt += 1;
-      continue;
-    }
-    throw new Error(`DOL ${endpoint} offset=${offset} -> ${res.status} ${await res.text()}`);
+    if (attempt >= 8) throw new Error(`DOL ${endpoint} offset=${offset} -> exhausted retries`);
+    await sleep(Math.min(2 ** attempt * 500, 30_000));
+    attempt += 1;
   }
 }
 

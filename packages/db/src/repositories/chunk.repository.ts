@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { inArray } from 'drizzle-orm';
 import type { Database } from '../client.js';
 import { accidentChunk } from '../schema/rag.js';
 
@@ -14,7 +14,7 @@ export class ChunkRepository {
 
   async deleteBySummary(ids: number[]): Promise<void> {
     if (ids.length === 0) return;
-    await this.db.delete(accidentChunk).where(sql`summary_nr = ANY(${ids})`);
+    await this.db.delete(accidentChunk).where(inArray(accidentChunk.summaryNr, ids));
   }
 
   async insert(rows: NewChunk[]): Promise<void> {
