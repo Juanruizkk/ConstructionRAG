@@ -10,11 +10,11 @@ const FIELDS = [
   'final_order_date',
 ].join(',');
 
-export async function loadViolations(): Promise<number> {
+export async function loadViolations(activityNrs?: number[]): Promise<number> {
   const { db, queryClient } = createClient();
   const inspections = new InspectionRepository(db);
   const repo = new ViolationRepository(db);
-  const ids = await inspections.allActivityNrs();
+  const ids = activityNrs ?? await inspections.allActivityNrs();
   let total = 0;
   try {
     for (const batch of chunk(ids, SCOPE.batchSize)) {

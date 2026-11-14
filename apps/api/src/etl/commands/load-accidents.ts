@@ -8,11 +8,11 @@ import { reassemble } from '../narratives.js';
  * Cascade: in-scope activity_nr -> accident_injury (by rel_insp_nr) -> summary_nr set
  * -> accident + accident_abstract (by summary_nr). Insert-as-you-go; partial-tolerant.
  */
-export async function loadAccidents(): Promise<void> {
+export async function loadAccidents(activityNrs?: number[]): Promise<void> {
   const { db, queryClient } = createClient();
   const inspections = new InspectionRepository(db);
   const repo = new AccidentRepository(db);
-  const inScope = new Set(await inspections.allActivityNrs());
+  const inScope = new Set(activityNrs ?? await inspections.allActivityNrs());
 
   const injuryFields = [
     'summary_nr', 'rel_insp_nr', 'degree_of_inj', 'nature_of_inj', 'part_of_body',
