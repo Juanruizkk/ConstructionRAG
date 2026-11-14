@@ -3,6 +3,7 @@ const base = import.meta.env.VITE_API_URL ?? '/api';
 export interface BidRow {
   contractorId: number | null;
   name: string;
+  state: string | null;
   status: string;
   riskRaw: number | null;
   riskScore: number | null;

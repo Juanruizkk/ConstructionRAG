@@ -7,7 +7,7 @@ export class BidService {
   async getBid(bidId: number) {
     const rows = await this.deps.db.execute(sql`
       SELECT bc.contractor_id, bc.entered_name, bc.trade, bc.status,
-             c.display_name, r.risk_raw, r.risk_score,
+             c.display_name, c.primary_state, r.risk_raw, r.risk_score,
              r.n_fatalities, r.n_serious, r.n_inspections
       FROM bid_contractor bc
       LEFT JOIN contractor c ON c.id = bc.contractor_id
