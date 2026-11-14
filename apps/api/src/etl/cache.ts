@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 
 const RAW_DIR = join(process.cwd(), '..', '..', 'data', 'raw');
 
-export function cacheKey(endpoint: string, filterObject: unknown, offset: number): string {
-  const payload = JSON.stringify({ endpoint, filterObject, offset });
+export function cacheKey(endpoint: string, filterObject: unknown, offset: number, fields?: string): string {
+  const payload = JSON.stringify({ endpoint, filterObject, offset, fields: fields ?? null });
   const hash = createHash('sha256').update(payload).digest('hex').slice(0, 16);
   return join(RAW_DIR, endpoint, `${hash}.json`);
 }

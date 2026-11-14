@@ -1,4 +1,10 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { config as loadEnv } from 'dotenv';
 import { z } from 'zod';
+
+// Load the monorepo-root .env regardless of which package the command runs from.
+loadEnv({ path: join(dirname(fileURLToPath(import.meta.url)), '../../../.env') });
 
 export const SCOPE = {
   states: ['CA', 'TX', 'NY'] as const,
@@ -6,7 +12,7 @@ export const SCOPE = {
   // ~10 years back; verify the API's accepted date format during impl.
   openDateFrom: '2015-01-01',
   batchSize: 200,          // activity_nr / summary_nr per `in` request
-  pageLimit: 10_000,       // API hard cap per page
+  pageLimit: 5_000,        // keep page payload under the API's 6 MB cap
 };
 
 export const ER = {

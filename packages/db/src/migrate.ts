@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
@@ -15,8 +16,8 @@ export async function runMigrations(url = process.env.DATABASE_URL) {
   }
 }
 
-// Allow `tsx src/migrate.ts` to run it directly.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Allow `tsx src/migrate.ts` to run it directly (cross-platform entrypoint check).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runMigrations()
     .then(() => {
       console.log('migrations applied');
