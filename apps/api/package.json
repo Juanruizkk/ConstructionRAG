@@ -13,14 +13,19 @@
     "etl:seed": "tsx src/etl/commands/seed-bid.ts",
     "etl:enrich": "tsx src/etl/commands/enrich-bid.ts",
     "etl:all": "tsx src/etl/commands/run-all.ts",
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",
     "@ssi/db": "workspace:*",
     "dotenv": "^16.4.5",
+    "fastify": "^5.1.0",
+    "groq-sdk": "^0.9.0",
     "postgres": "^4.1.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
