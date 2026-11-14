@@ -6,6 +6,7 @@ export const accident = pgTable('accident', {
   summaryNr: bigint('summary_nr', { mode: 'number' }).primaryKey(),
   eventDate: date('event_date', { mode: 'string' }),
   eventDesc: text('event_desc'),
+  narrative: text('narrative'), // reassembled accident_abstract (the RAG source text)
   projectType: text('project_type'),
   buildStories: integer('build_stories'),
   nonbuildHt: integer('nonbuild_ht'),
