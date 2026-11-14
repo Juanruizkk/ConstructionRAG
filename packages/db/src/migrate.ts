@@ -1,3 +1,5 @@
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
@@ -11,6 +13,15 @@ export async function runMigrations(url = process.env.DATABASE_URL) {
     await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
     const db = drizzle(sql);
     await migrate(db, { migrationsFolder: './migrations' });
+
+    // Apply hand-written post-migrations (materialized views / objects Drizzle can't express).
+    const postDir = './migrations/post';
+    try {
+      const files = (await readdir(postDir)).filter((f) => f.endsWith('.sql')).sort();
+      for (const f of files) await sql.unsafe(await readFile(join(postDir, f), 'utf8'));
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+    }
   } finally {
     await sql.end();
   }
