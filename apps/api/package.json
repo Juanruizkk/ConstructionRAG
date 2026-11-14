@@ -1,0 +1,29 @@
+{
+  "name": "@ssi/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "etl:inspections": "tsx src/etl/commands/load-inspections.ts",
+    "etl:violations": "tsx src/etl/commands/load-violations.ts",
+    "etl:accidents": "tsx src/etl/commands/load-accidents.ts",
+    "etl:resolve": "tsx src/etl/commands/resolve-entities.ts",
+    "etl:embed": "tsx src/etl/commands/embed-chunks.ts",
+    "etl:refresh": "tsx src/etl/commands/refresh-risk.ts",
+    "etl:seed": "tsx src/etl/commands/seed-bid.ts",
+    "etl:all": "tsx src/etl/commands/run-all.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
+    "@ssi/db": "workspace:*",
+    "postgres": "^4.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^5.1.0"
+  }
+}
