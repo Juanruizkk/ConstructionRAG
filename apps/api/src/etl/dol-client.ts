@@ -72,6 +72,22 @@ export async function fetchAll(
   return out;
 }
 
+/** Yield pages one at a time (insert-as-you-go → partial progress survives a mid-run failure). */
+export async function* iteratePages(
+  endpoint: string,
+  filterObject: FilterObject | undefined,
+  limit: number,
+  fields?: string,
+): AsyncGenerator<Record<string, unknown>[]> {
+  let offset = 0;
+  for (;;) {
+    const page = await fetchPage(endpoint, filterObject, offset, limit, fields);
+    yield page;
+    if (page.length < limit) break;
+    offset += limit;
+  }
+}
+
 export function chunk<T>(arr: T[], size: number): T[][] {
   const res: T[][] = [];
   for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
