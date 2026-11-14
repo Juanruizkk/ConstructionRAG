@@ -1,0 +1,1043 @@
+{
+  "id": "01e02f03-6730-43d2-a8a1-c93af08701a3",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.contractor": {
+      "name": "contractor",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "canonical_name": {
+          "name": "canonical_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "norm_name": {
+          "name": "norm_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "primary_state": {
+          "name": "primary_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "contractor_norm_name_trgm_idx": {
+          "name": "contractor_norm_name_trgm_idx",
+          "columns": [
+            {
+              "expression": "norm_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contractor_alias": {
+      "name": "contractor_alias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "contractor_id": {
+          "name": "contractor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_name": {
+          "name": "raw_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "norm_name": {
+          "name": "norm_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrences": {
+          "name": "occurrences",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "first_seen": {
+          "name": "first_seen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_seen": {
+          "name": "last_seen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "match_method": {
+          "name": "match_method",
+          "type": "match_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "contractor_alias_uq": {
+          "name": "contractor_alias_uq",
+          "columns": [
+            {
+              "expression": "contractor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "norm_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "contractor_alias_norm_trgm_idx": {
+          "name": "contractor_alias_norm_trgm_idx",
+          "columns": [
+            {
+              "expression": "norm_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contractor_alias_contractor_id_contractor_id_fk": {
+          "name": "contractor_alias_contractor_id_contractor_id_fk",
+          "tableFrom": "contractor_alias",
+          "tableTo": "contractor",
+          "columnsFrom": [
+            "contractor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inspection": {
+      "name": "inspection",
+      "schema": "",
+      "columns": {
+        "activity_nr": {
+          "name": "activity_nr",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "contractor_id": {
+          "name": "contractor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estab_name_raw": {
+          "name": "estab_name_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "site_address": {
+          "name": "site_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "site_city": {
+          "name": "site_city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "site_state": {
+          "name": "site_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "site_zip": {
+          "name": "site_zip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "naics_code": {
+          "name": "naics_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insp_type": {
+          "name": "insp_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insp_scope": {
+          "name": "insp_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_type": {
+          "name": "owner_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_state_plan": {
+          "name": "is_state_plan",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "union_status": {
+          "name": "union_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "safety_const": {
+          "name": "safety_const",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nr_in_estab": {
+          "name": "nr_in_estab",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_date": {
+          "name": "open_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "close_case_date": {
+          "name": "close_case_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "inspection_contractor_idx": {
+          "name": "inspection_contractor_idx",
+          "columns": [
+            {
+              "expression": "contractor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "inspection_state_idx": {
+          "name": "inspection_state_idx",
+          "columns": [
+            {
+              "expression": "site_state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "inspection_naics_idx": {
+          "name": "inspection_naics_idx",
+          "columns": [
+            {
+              "expression": "naics_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "inspection_contractor_id_contractor_id_fk": {
+          "name": "inspection_contractor_id_contractor_id_fk",
+          "tableFrom": "inspection",
+          "tableTo": "contractor",
+          "columnsFrom": [
+            "contractor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.violation": {
+      "name": "violation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "activity_nr": {
+          "name": "activity_nr",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "citation_id": {
+          "name": "citation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "standard": {
+          "name": "standard",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "viol_type": {
+          "name": "viol_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_penalty": {
+          "name": "current_penalty",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_penalty": {
+          "name": "initial_penalty",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nr_instances": {
+          "name": "nr_instances",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nr_exposed": {
+          "name": "nr_exposed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gravity": {
+          "name": "gravity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "issuance_date": {
+          "name": "issuance_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "abate_date": {
+          "name": "abate_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "final_order_date": {
+          "name": "final_order_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "violation_activity_citation_uq": {
+          "name": "violation_activity_citation_uq",
+          "columns": [
+            {
+              "expression": "activity_nr",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "citation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "violation_activity_idx": {
+          "name": "violation_activity_idx",
+          "columns": [
+            {
+              "expression": "activity_nr",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "violation_type_idx": {
+          "name": "violation_type_idx",
+          "columns": [
+            {
+              "expression": "viol_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "violation_activity_nr_inspection_activity_nr_fk": {
+          "name": "violation_activity_nr_inspection_activity_nr_fk",
+          "tableFrom": "violation",
+          "tableTo": "inspection",
+          "columnsFrom": [
+            "activity_nr"
+          ],
+          "columnsTo": [
+            "activity_nr"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.accident": {
+      "name": "accident",
+      "schema": "",
+      "columns": {
+        "summary_nr": {
+          "name": "summary_nr",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "event_date": {
+          "name": "event_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_desc": {
+          "name": "event_desc",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "project_type": {
+          "name": "project_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "build_stories": {
+          "name": "build_stories",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nonbuild_ht": {
+          "name": "nonbuild_ht",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fatality_flag": {
+          "name": "fatality_flag",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.accident_injury": {
+      "name": "accident_injury",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "summary_nr": {
+          "name": "summary_nr",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rel_insp_nr": {
+          "name": "rel_insp_nr",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "degree_of_inj": {
+          "name": "degree_of_inj",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nature_of_inj": {
+          "name": "nature_of_inj",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "part_of_body": {
+          "name": "part_of_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fat_cause": {
+          "name": "fat_cause",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fall_ht": {
+          "name": "fall_ht",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fall_distance": {
+          "name": "fall_distance",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age": {
+          "name": "age",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sex": {
+          "name": "sex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "accident_injury_summary_idx": {
+          "name": "accident_injury_summary_idx",
+          "columns": [
+            {
+              "expression": "summary_nr",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "accident_injury_rel_insp_idx": {
+          "name": "accident_injury_rel_insp_idx",
+          "columns": [
+            {
+              "expression": "rel_insp_nr",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "accident_injury_summary_nr_accident_summary_nr_fk": {
+          "name": "accident_injury_summary_nr_accident_summary_nr_fk",
+          "tableFrom": "accident_injury",
+          "tableTo": "accident",
+          "columnsFrom": [
+            "summary_nr"
+          ],
+          "columnsTo": [
+            "summary_nr"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bid": {
+      "name": "bid",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bid_contractor": {
+      "name": "bid_contractor",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "bid_id": {
+          "name": "bid_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contractor_id": {
+          "name": "contractor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entered_name": {
+          "name": "entered_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trade": {
+          "name": "trade",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "bid_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "bid_contractor_uq": {
+          "name": "bid_contractor_uq",
+          "columns": [
+            {
+              "expression": "bid_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "contractor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"bid_contractor\".\"contractor_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "bid_contractor_bid_id_bid_id_fk": {
+          "name": "bid_contractor_bid_id_bid_id_fk",
+          "tableFrom": "bid_contractor",
+          "tableTo": "bid",
+          "columnsFrom": [
+            "bid_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "bid_contractor_contractor_id_contractor_id_fk": {
+          "name": "bid_contractor_contractor_id_contractor_id_fk",
+          "tableFrom": "bid_contractor",
+          "tableTo": "contractor",
+          "columnsFrom": [
+            "contractor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.accident_chunk": {
+      "name": "accident_chunk",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "summary_nr": {
+          "name": "summary_nr",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contractor_ids": {
+          "name": "contractor_ids",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_date": {
+          "name": "event_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tsv": {
+          "name": "tsv",
+          "type": "tsvector",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(384)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_model": {
+          "name": "embedding_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "accident_chunk_embedding_hnsw": {
+          "name": "accident_chunk_embedding_hnsw",
+          "columns": [
+            {
+              "expression": "embedding",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "vector_cosine_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "hnsw",
+          "with": {}
+        },
+        "accident_chunk_contractors_gin": {
+          "name": "accident_chunk_contractors_gin",
+          "columns": [
+            {
+              "expression": "contractor_ids",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "accident_chunk_tsv_gin": {
+          "name": "accident_chunk_tsv_gin",
+          "columns": [
+            {
+              "expression": "tsv",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "accident_chunk_summary_nr_accident_summary_nr_fk": {
+          "name": "accident_chunk_summary_nr_accident_summary_nr_fk",
+          "tableFrom": "accident_chunk",
+          "tableTo": "accident",
+          "columnsFrom": [
+            "summary_nr"
+          ],
+          "columnsTo": [
+            "summary_nr"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cfr_section": {
+      "name": "cfr_section",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "section_code": {
+          "name": "section_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "cfr_section_code_uq": {
+          "name": "cfr_section_code_uq",
+          "columns": [
+            {
+              "expression": "section_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.bid_status": {
+      "name": "bid_status",
+      "schema": "public",
+      "values": [
+        "matched",
+        "not_found"
+      ]
+    },
+    "public.match_method": {
+      "name": "match_method",
+      "schema": "public",
+      "values": [
+        "exact",
+        "trgm",
+        "typo"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
