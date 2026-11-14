@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
   "scripts": {
     "etl:inspections": "tsx src/etl/commands/load-inspections.ts",
     "etl:violations": "tsx src/etl/commands/load-violations.ts",

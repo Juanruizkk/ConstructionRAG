@@ -10,6 +10,21 @@ export class GroqProvider implements LLMProvider {
   private client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
   async complete(messages: ChatMessage[], tools: ToolSpec[]): Promise<AssistantTurn> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.once(messages, tools);
+      } catch (err: unknown) {
+        const status = (err as { status?: number }).status;
+        if (status === 429 && attempt < 6) {
+          await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 1000, 20_000)));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  private async once(messages: ChatMessage[], tools: ToolSpec[]): Promise<AssistantTurn> {
     const res = await this.client.chat.completions.create({
       model: MODEL,
       temperature: 0,
