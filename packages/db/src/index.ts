@@ -8,3 +8,4 @@ export * from './repositories/contractor.repository.js';
 export * from './repositories/inspection.repository.js';
 export * from './repositories/violation.repository.js';
 export * from './repositories/accident.repository.js';
+export * from './repositories/chunk.repository.js';
