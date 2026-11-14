@@ -1,5 +1,5 @@
 import {
-  pgTable, bigint, integer, text, date, boolean, index,
+  pgTable, bigint, integer, text, date, timestamp, index,
 } from 'drizzle-orm/pg-core';
 import { contractor } from './contractors.js';
 
@@ -13,14 +13,10 @@ export const inspection = pgTable('inspection', {
   siteZip: text('site_zip'),
   naicsCode: text('naics_code'),
   inspType: text('insp_type'),
-  inspScope: text('insp_scope'),
-  ownerType: text('owner_type'),
-  isStatePlan: boolean('is_state_plan'),
-  unionStatus: text('union_status'),
-  safetyConst: text('safety_const'),
-  nrInEstab: integer('nr_in_estab'),
   openDate: date('open_date', { mode: 'string' }),
-  closeCaseDate: date('close_case_date', { mode: 'string' }),
+  // Data-coverage flag: set when we query the violation endpoint for this inspection.
+  // Lets the app distinguish "looked, found nothing" (safe-ish) from "never loaded" (unknown).
+  violationsLoadedAt: timestamp('violations_loaded_at', { withTimezone: true }),
 }, (t) => [
   index('inspection_contractor_idx').on(t.contractorId),
   index('inspection_state_idx').on(t.siteState),

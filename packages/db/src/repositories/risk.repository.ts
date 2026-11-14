@@ -4,8 +4,8 @@ import { normalizeName } from '../er/normalize.js';
 
 export interface RiskRow {
   contractor_id: number; display_name: string; primary_state: string | null;
-  risk_raw: number; risk_score: number;
-  n_inspections: number; n_inspections_clean: number;
+  risk_raw: number; risk_score: number; history_loaded: boolean;
+  n_inspections: number; n_inspections_loaded: number; n_inspections_clean: number;
   n_serious: number; n_willful: number; n_repeat: number; n_other: number; n_unclassified: number;
   n_pending_contested: number; total_current_penalty: string;
   n_fatalities: number; n_fatalities_cited: number; n_fatalities_no_citation: number;

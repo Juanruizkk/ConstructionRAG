@@ -54,12 +54,15 @@ hagg AS (
 insp AS (
   SELECT i.contractor_id,
     COUNT(*) AS n_inspections,
+    COUNT(*) FILTER (WHERE i.violations_loaded_at IS NOT NULL) AS n_inspections_loaded,
     COUNT(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM violation vv WHERE vv.activity_nr=i.activity_nr)) AS n_inspections_clean,
     MAX(i.open_date) AS last_inspection_date
   FROM inspection i WHERE i.contractor_id IS NOT NULL GROUP BY i.contractor_id
 )
 SELECT c.id AS contractor_id,
   COALESCE(insp.n_inspections,0) AS n_inspections,
+  COALESCE(insp.n_inspections_loaded,0) AS n_inspections_loaded,
+  (COALESCE(insp.n_inspections_loaded,0) > 0) AS history_loaded,
   COALESCE(insp.n_inspections_clean,0) AS n_inspections_clean,
   COALESCE(vagg.n_serious,0) AS n_serious,
   COALESCE(vagg.n_willful,0) AS n_willful,

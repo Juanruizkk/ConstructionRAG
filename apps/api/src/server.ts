@@ -29,7 +29,13 @@ export function buildServer() {
       enteredName: z.string().optional(),
       trade: z.string().optional(),
     }).parse(req.body);
-    return (await bids.addContractor(id, body)).map(toBidRowDto);
+    await bids.addContractor(id, body);
+    // Kick off enrichment in the background (DOL is rate-limited, so this can take a while).
+    // The row returns now as "History not loaded"; coverage flips on a later refresh once it completes.
+    if (body.contractorId != null) {
+      void bids.enrichContractor(body.contractorId).catch((e) => app.log.warn({ err: e }, 'enrichContractor failed (rate limit?)'));
+    }
+    return (await bids.getBid(id)).map(toBidRowDto);
   });
 
   app.get('/contractors/search', async (req) => {

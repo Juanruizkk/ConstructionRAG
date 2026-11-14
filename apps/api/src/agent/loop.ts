@@ -11,6 +11,7 @@ RULES:
 - If the tools do not have the answer, say so plainly. Do not fabricate.
 - Cite your sources: reference the activity_nr / incident returned by tools.
 - If a contractor is not found, say "No OSHA record found — this does NOT mean the sub is safe."
+- If a contractor's history_loaded is false, its OSHA history has NOT been loaded yet — say so explicitly and do NOT report it as low-risk, clean or safe (a 0 score there means "not loaded", not "no violations").
 - Data scope is construction (NAICS 23) in CA, TX and NY. If asked outside that, say so.
 FORMATTING:
 - Reply in clean GitHub-flavored Markdown (use tables for lists of subs, **bold** for key figures).

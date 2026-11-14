@@ -15,9 +15,8 @@ export async function loadInspections(): Promise<number> {
     ],
   };
   const fields = [
-    'activity_nr', 'reporting_id', 'estab_name', 'site_address', 'site_city', 'site_state',
-    'site_zip', 'naics_code', 'insp_type', 'insp_scope', 'owner_type', 'union_status',
-    'safety_const', 'nr_in_estab', 'open_date', 'close_case_date',
+    'activity_nr', 'estab_name', 'site_address', 'site_city', 'site_state',
+    'site_zip', 'naics_code', 'insp_type', 'open_date',
   ].join(',');
 
   let total = 0;

@@ -59,9 +59,17 @@ Monorepo: `packages/db` (Drizzle schema + migrations + **repositories**, shared 
 
 Core relational tables mirror OSHA's model; **IDs and coded fields are stored as-is** (text, no enums) so the deliberately-messy source data can never break a load.
 
-- **`inspection`** (`activity_nr` PK) — one OSHA inspection. `contractor_id` is **nullable**, assigned *after* entity resolution. The site address is the **job site**, not the company HQ (important — see ER).
+- **`inspection`** (`activity_nr` PK) — one OSHA inspection. `contractor_id` is **nullable**, assigned *after* entity resolution. The site address is the **job site**, not the company HQ (important — see ER). `violations_loaded_at` is a **data-coverage flag** (see [Data scoping](#data-scoping--the-rate-limit-reality)).
 - **`violation`** — citations, `UNIQUE(activity_nr, citation_id)` for idempotent upserts. `viol_type` ∈ S/W/R/O/U.
-- **`accident`** / **`accident_injury`** — OSHA-investigated incidents. An accident has **no `activity_nr`**: the link to an employer is `accident_injury.rel_insp_nr → inspection.activity_nr`, which is **N:M** (one accident can trigger inspections of the GC and several subs). `rel_insp_nr` is deliberately **not** a foreign key (a related inspection can fall outside our scope; such rows are counted and dropped).
+- **`accident`** / **`accident_injury`** — OSHA-investigated incidents. The full chain that connects "what happened" to "which company" is:
+
+  ```
+  accident ──summary_nr──► accident_injury ──rel_insp_nr──► inspection ──contractor_id──► contractor
+  (what happened)          (one row per injured worker)     (inspection of that             (the firm)
+                                                             worker's EMPLOYER)
+  ```
+
+  So an accident links to its injuries by **`summary_nr`** ("this injury belongs to this accident"), and each injury links to an inspection by **`rel_insp_nr`** ("this injury was investigated in this inspection" — the inspection of the injured worker's employer). An accident therefore has **no `activity_nr`** of its own, and the accident↔inspection relationship is **N:M** (one accident can trigger inspections of the GC and several subs, each with their own injured workers). `rel_insp_nr` is deliberately **not** a foreign key (a related inspection can fall outside our scope; such rows are counted and dropped). This is why a fatality is attributed to the *employer* of the worker who died, which is the fair attribution for the GC's risk view.
 - **`contractor`** (canonical) + **`contractor_alias`** (every raw name variant, with `match_method` + `confidence`) — the entity-resolution output.
 - **`bid`** / **`bid_contractor`** — the GC's bid. `bid_contractor.contractor_id` is **nullable** (a sub may have no OSHA record) with a **partial unique index**; `status` ∈ matched/not_found.
 - **`accident_chunk`** — RAG corpus: one embedded narrative per accident, with `contractor_ids int[]` (denormalized, GIN-indexed) for filtered retrieval, `embedding vector(384)` with an **HNSW** cosine index, and `embedding_model` to detect model drift.
@@ -126,6 +134,8 @@ Scope: **construction (NAICS 23), states CA/TX/NY, ~last 10 years** — chosen f
 - Violations/accidents use a **bid-first targeted** strategy: load everything for the ~12 subs actually on the bid, so the dashboard, risk scores, comparison, search and RAG all work on **real data**. The RAG corpus is thin (the enrichment trickles in as the key cools down) but the full pipeline — reassemble → embed (local `bge-small`) → HNSW retrieval filtered by contractor — is proven end-to-end (e.g. "employee run over by a truck" retrieves the real OLEAN fatality narrative at cosine 0.64).
 - `etl:enrich` is resumable: re-running accumulates more accidents over time without re-fetching cached pages.
 
+**"No data ≠ safe" is enforced in the product, not just the README.** Because only the bid's subs are loaded, the other ~36,000 contractors have zero violations loaded — their risk score is 0, which must *not* be read as "clean". So `inspection.violations_loaded_at` records whether we've actually queried a sub's citations, and `contractor_risk` exposes a `history_loaded` flag. The UI and the agent treat an un-loaded sub as **"History not loaded"**, never as low-risk or safe (exactly the error the whole design fights). This also fixes the seed's "clean" subs, which were only "zero violations *loaded*". When the GC adds a sub to the bid, the API **fires a background enrichment** of that sub's inspections (best-effort under the rate limit); the flag flips to loaded once it completes.
+
 ## Evals
 
 `evals/` runs the agent **in-process** (not over HTTP) so it can inspect the tool-call trace. Ground-truth numbers are computed directly from SQL at run time, so they always match the loaded data. 8 cases across 7 categories — lookup, comparison, narrative/RAG, unknown-contractor, ambiguous-name, pressure-to-fabricate, out-of-scope — scored on **answer accuracy**, **tool-call correctness**, and **citation grounding** (every id the model emits must appear in a captured tool result).
@@ -145,5 +155,5 @@ API and web ship as Docker images (`apps/api/Dockerfile`, `apps/web/Dockerfile`)
 - **Backfill the full violation/accident corpus** on a paid DOL key (or an overnight resumable loop) — the only thing blocking a deeper RAG demo.
 - **CFR 1926 corpus** + an `explain_standard` exact-lookup tool (designed, not built) to explain cited standards with citations.
 - **NAICS-peer percentile** in the risk score ("worse than 85% of roofers") for fairer comparison.
-- Dedup duplicate `accident_injury` rows the API sometimes returns; hybrid (vector + `tsvector`) retrieval; a proper "add to bid for an arbitrary contractor" UX and auth.
+- Dedup duplicate `accident_injury` rows the API sometimes returns; hybrid (vector + `tsvector`) retrieval; auth and multi-bid support.
 - A second LLM provider (Claude/GPT) wired through `LLMProvider` to compare tool-calling reliability in the eval report.

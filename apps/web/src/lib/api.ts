@@ -5,6 +5,7 @@ export interface BidRow {
   name: string;
   state: string | null;
   status: string;
+  historyLoaded: boolean;
   riskRaw: number | null;
   riskScore: number | null;
   fatalities: number | null;
