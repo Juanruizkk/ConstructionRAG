@@ -1,6 +1,5 @@
 import { createClient } from '@ssi/db';
 import { isMain } from '../is-main.js';
-import { loadViolations } from './load-violations.js';
 import { loadAccidents } from './load-accidents.js';
 
 /**
@@ -18,24 +17,32 @@ export async function seedBid(): Promise<void> {
     INSERT INTO bid (name) VALUES ('Downtown Office Tower — GC bid') RETURNING id`;
   const bidId = bid!.id;
 
-  // Risky: subs with accident/fatality inspections (insp_type A/M), avoiding mega-clusters.
+  // Risky: subs with the most serious/willful/repeat violations actually loaded.
   const risky = await sql<{ id: number }[]>`
-    SELECT c.id FROM contractor c JOIN inspection i ON i.contractor_id = c.id
+    SELECT c.id FROM contractor c
+    JOIN inspection i ON i.contractor_id = c.id
+    JOIN violation v ON v.activity_nr = i.activity_nr
     GROUP BY c.id
-    HAVING count(*) FILTER (WHERE i.insp_type IN ('A','M')) >= 3 AND count(*) <= 40
-    ORDER BY count(*) FILTER (WHERE i.insp_type IN ('A','M')) DESC
+    ORDER BY count(*) FILTER (WHERE v.viol_type IN ('S','W','R')) DESC, count(*) DESC
     LIMIT 6`;
-  // Mid: decent inspection count, no incident type.
+  // Mid: some violations, lower severity.
   const mid = await sql<{ id: number }[]>`
-    SELECT c.id FROM contractor c JOIN inspection i ON i.contractor_id = c.id
+    SELECT c.id FROM contractor c
+    JOIN inspection i ON i.contractor_id = c.id
+    JOIN violation v ON v.activity_nr = i.activity_nr
+    WHERE c.id NOT IN (
+      SELECT c2.id FROM contractor c2
+      JOIN inspection i2 ON i2.contractor_id = c2.id
+      JOIN violation v2 ON v2.activity_nr = i2.activity_nr
+      GROUP BY c2.id ORDER BY count(*) FILTER (WHERE v2.viol_type IN ('S','W','R')) DESC, count(*) DESC LIMIT 6)
     GROUP BY c.id
-    HAVING count(*) FILTER (WHERE i.insp_type IN ('A','M')) = 0 AND count(*) BETWEEN 4 AND 15
     ORDER BY count(*) DESC LIMIT 4`;
-  // Clean-ish: very few inspections, no incident.
+  // Clean-ish: inspected, zero violations loaded (a positive signal, with the "no record != safe" caveat).
   const clean = await sql<{ id: number }[]>`
-    SELECT c.id FROM contractor c JOIN inspection i ON i.contractor_id = c.id
-    GROUP BY c.id
-    HAVING count(*) FILTER (WHERE i.insp_type IN ('A','M')) = 0 AND count(*) BETWEEN 1 AND 2
+    SELECT c.id FROM contractor c
+    JOIN inspection i ON i.contractor_id = c.id
+    WHERE NOT EXISTS (SELECT 1 FROM violation v JOIN inspection i3 ON i3.activity_nr = v.activity_nr WHERE i3.contractor_id = c.id)
+    GROUP BY c.id HAVING count(*) BETWEEN 1 AND 3
     ORDER BY random() LIMIT 2`;
 
   const matchedIds = [...risky, ...mid, ...clean].map((r) => r.id);
@@ -54,11 +61,13 @@ export async function seedBid(): Promise<void> {
   const activityNrs = anrRows.map((r) => Number(r.activity_nr));
   await sql.end();
 
-  console.log(`seeded bid ${bidId}: ${matchedIds.length} matched + 1 not_found; ${activityNrs.length} inspections to enrich`);
+  console.log(`seeded bid ${bidId}: ${matchedIds.length} matched + 1 not_found; ${activityNrs.length} inspections`);
 
-  // Targeted enrichment (only the bid's inspections).
-  await loadViolations(activityNrs);
-  await loadAccidents(activityNrs);
+  // Targeted enrichment of the bid's inspections. Violations for these subs are already loaded;
+  // attempt accidents (narratives/fatalities for RAG). Resilient: a DOL rate-limit just leaves it empty.
+  if (process.env.ENRICH !== '0') {
+    await loadAccidents(activityNrs);
+  }
 }
 
 if (isMain(import.meta.url)) {

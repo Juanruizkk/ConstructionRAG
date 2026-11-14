@@ -11,6 +11,7 @@
     "etl:embed": "tsx src/etl/commands/embed-chunks.ts",
     "etl:refresh": "tsx src/etl/commands/refresh-risk.ts",
     "etl:seed": "tsx src/etl/commands/seed-bid.ts",
+    "etl:enrich": "tsx src/etl/commands/enrich-bid.ts",
     "etl:all": "tsx src/etl/commands/run-all.ts",
     "test": "vitest run"
   },
