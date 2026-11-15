@@ -20,9 +20,9 @@ services:
       retries: 20
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    # Prebuilt image (built & pushed from a dev machine — the 1-core VPS does not compile).
+    # Rebuild: docker build -f apps/api/Dockerfile -t juanruizkk/ssi-api:latest . && docker push juanruizkk/ssi-api:latest
+    image: juanruizkk/ssi-api:latest
     environment:
       DATABASE_URL: postgres://ssi:${POSTGRES_PASSWORD:-ssi}@db:5432/ssi
       GROQ_API_KEY: ${GROQ_API_KEY}
@@ -36,9 +36,9 @@ services:
     restart: unless-stopped
 
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+    # Prebuilt image (built & pushed from a dev machine — the 1-core VPS does not compile).
+    # Rebuild: docker build -f apps/web/Dockerfile -t juanruizkk/ssi-web:latest . && docker push juanruizkk/ssi-web:latest
+    image: juanruizkk/ssi-web:latest
     # Attach your domain to this service (port 80) in the Dokploy UI.
     # nginx.conf proxies /api/* -> http://api:3001 on the compose network.
     depends_on:
