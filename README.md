@@ -24,6 +24,7 @@ pnpm --filter @ssi/api etl:violations     # citations
 pnpm --filter @ssi/api etl:resolve        # entity resolution → canonical contractors
 pnpm --filter @ssi/api etl:seed           # demo bid (violation-rich subs + a not-found sub)
 pnpm --filter @ssi/api etl:enrich         # accidents/narratives for the bid + embeddings + refresh
+pnpm --filter @ssi/api etl:cfr            # official 29 CFR standard text (from eCFR) → explain_standard
 
 pnpm --filter @ssi/api dev                # API on :3001
 pnpm --filter @ssi/web dev                # web on :5173 (proxies /api → :3001)
@@ -57,6 +58,93 @@ Monorepo: `packages/db` (Drizzle schema + migrations + **repositories**, shared 
 
 ## Database schema & why
 
+```mermaid
+erDiagram
+    contractor ||--o{ contractor_alias : "written as"
+    contractor |o--o{ inspection : "inspected in"
+    inspection ||--o{ violation : "has"
+    accident ||--|{ accident_injury : "injures (summary_nr)"
+    inspection |o..o{ accident_injury : "employer (rel_insp_nr, no FK)"
+    accident ||--o| accident_chunk : "embedded as"
+    bid ||--o{ bid_contractor : "includes"
+    contractor |o--o{ bid_contractor : "is"
+    contractor ||--|| contractor_risk : "metrics (materialized view)"
+
+    contractor {
+        int id PK
+        text canonical_name
+        text display_name
+        text norm_name "GIN trigram"
+        text primary_state "nullable"
+    }
+    contractor_alias {
+        int id PK
+        int contractor_id FK
+        text raw_name
+        text norm_name
+        enum match_method "exact | trgm"
+        numeric confidence
+    }
+    inspection {
+        bigint activity_nr PK
+        int contractor_id FK "nullable"
+        text estab_name_raw
+        text site_state
+        text naics_code
+        text insp_type
+        date open_date
+        timestamptz violations_loaded_at "coverage flag"
+    }
+    violation {
+        int id PK
+        bigint activity_nr FK
+        text citation_id
+        text viol_type "S W R O U"
+        numeric current_penalty
+        date issuance_date
+        date final_order_date
+    }
+    accident {
+        bigint summary_nr PK
+        date event_date
+        text event_desc
+        text narrative
+    }
+    accident_injury {
+        int id PK
+        bigint summary_nr FK
+        bigint rel_insp_nr "= inspection, no FK"
+        text degree_of_inj "1 2 3"
+        int fall_ht
+    }
+    bid {
+        int id PK
+        text name
+    }
+    bid_contractor {
+        int id PK
+        int bid_id FK
+        int contractor_id FK "nullable"
+        text entered_name
+        enum status "matched | not_found"
+    }
+    accident_chunk {
+        int id PK
+        bigint summary_nr FK
+        int_array contractor_ids "GIN"
+        text text
+        vector embedding "384 dims, HNSW"
+    }
+    contractor_risk {
+        int contractor_id PK
+        bool history_loaded
+        numeric risk_raw
+        int risk_score
+    }
+```
+
+> Solid lines = real foreign keys. Dotted = logical link without a forced FK (`accident_injury.rel_insp_nr → inspection`). `contractor_risk` is a materialized view. `cfr_section` holds the **official 29 CFR text** for the cited construction standards (loaded verbatim from the government [eCFR API](https://www.ecfr.gov/), powering the `explain_standard` tool).
+
 Core relational tables mirror OSHA's model; **IDs and coded fields are stored as-is** (text, no enums) so the deliberately-messy source data can never break a load.
 
 - **`inspection`** (`activity_nr` PK) — one OSHA inspection. `contractor_id` is **nullable**, assigned *after* entity resolution. The site address is the **job site**, not the company HQ (important — see ER). `violations_loaded_at` is a **data-coverage flag** (see [Data scoping](#data-scoping--the-rate-limit-reality)).
@@ -89,6 +177,7 @@ Why one Postgres with pgvector: keeping vectors next to the relational data lets
 | `list_violations(id, since?, type?)` | citation items (+ pending flag) | SQL |
 | `compare_contractors(ids[], metric)` | ranking | SQL |
 | `search_incidents(query, contractor_id?)` | accident narratives | **RAG** (pgvector) |
+| `explain_standard(code)` | official 29 CFR text for a cited standard | exact lookup (eCFR) |
 
 Every answer **cites sources** (`activity_nr` → osha.gov inspection page; incident `summary_nr`). The agent loop runs ≤ 6 iterations; tool errors **and** zod validation errors are fed back to the model so it self-corrects.
 
@@ -120,7 +209,13 @@ risk_raw       = 10 × severity_rate + HS                   harm counts in absol
 risk_score     = min(100, round(risk_raw))                 0–100 for display; band HIGH≥60 / MED≥25 / LOW≥1 / NONE
 ```
 
-Design choices: **willful/repeat weighted 10× serious** because OSHA's statutory maximum penalty is ~10× (2026: serious $16,550 vs willful/repeat $165,514). **Penalties are shown but not scored** (they double-count severity and depend on settlements/contests). **Pending/contested** citations (no `final_order_date`) are counted but flagged. The GC table **sorts by `risk_raw` (uncapped)** so the worst subs don't tie at 100.
+Design choices:
+
+- **Dollar penalties are shown, but not scored.** The fine amount already reflects how serious a violation is (which the type weights capture), and it changes with settlements and appeals — so scoring it would count severity twice and compare unstable numbers. We display it as context only.
+- **Citations that aren't final yet still count, but are flagged.** A citation with no `final_order_date` (e.g. one the company is contesting) is included so we don't under-report risk, but marked as *pending* since it could still be reduced or dropped.
+- **The table ranks by `risk_raw` (uncapped).** The displayed score is capped at 100, so several bad subs would all show "100" and tie. Sorting by the uncapped `risk_raw` keeps the genuinely worst sub on top (e.g. one sub at raw 114 vs another at 250 — both show 100, but the second is worse).
+
+**Where the weights come from (honest):** the inputs are real OSHA data, but the *weights are my design choice* — transparent and tunable (they live in `0001_risk_view.sql`), **not an industry standard**. Ideally they'd be calibrated against known outcomes or domain-expert input.
 
 **Limitations (in the UI and here):** *no inspections ≠ safe* — an un-inspected sub shows "No OSHA record", never 0 risk. OSHA inspections aren't random (selection bias), so a high score can reflect scrutiny. Normalizing by inspections can flatter the rarely-inspected (e.g. a highway dept with 139 inspections and 11 serious violations scores low per-exposure).
 
@@ -152,8 +247,10 @@ API and web ship as Docker images (`apps/api/Dockerfile`, `apps/web/Dockerfile`)
 
 ## Trade-offs & with more time
 
-- **Backfill the full violation/accident corpus** on a paid DOL key (or an overnight resumable loop) — the only thing blocking a deeper RAG demo.
-- **CFR 1926 corpus** + an `explain_standard` exact-lookup tool (designed, not built) to explain cited standards with citations.
-- **NAICS-peer percentile** in the risk score ("worse than 85% of roofers") for fairer comparison.
-- Dedup duplicate `accident_injury` rows the API sometimes returns; hybrid (vector + `tsvector`) retrieval; auth and multi-bid support.
-- A second LLM provider (Claude/GPT) wired through `LLMProvider` to compare tool-calling reliability in the eval report.
+- **Backfill the full violation/accident corpus** on a paid DOL key (or an overnight resumable loop) — the biggest lever: it unblocks complete risk scores and a deeper RAG demo.
+- **Better handle state-plan jurisdictions.** Public-sector employers (e.g. NY highway departments) are inspected under state plans, whose records aren't in the federal OSHA search (so their citation links don't resolve) and whose codes aren't 29 CFR (e.g. the NY Industrial Code). I'd add per-state link resolution and a code parser.
+- **Expand the CFR corpus** beyond the ~14 most-cited standards — the `explain_standard` tool + eCFR loader are built, it's just a bigger seed list.
+- **Calibrate the risk weights.** They're transparent and tunable but hand-chosen; ideally calibrate against known outcomes or expert input, add a sensitivity analysis, and add a **NAICS-peer percentile** ("worse than 85% of roofers") for fairer comparison.
+- **Data quality & retrieval:** dedup the duplicate `accident_injury` rows the API sometimes returns; add hybrid (vector + `tsvector`) retrieval.
+- **Product:** auth and multi-bid support; a "retry enrichment" action for subs stuck on *History not loaded*.
+- **A second LLM provider** (Claude/GPT) wired through `LLMProvider` to compare tool-calling reliability in the eval report.

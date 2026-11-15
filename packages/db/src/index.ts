@@ -10,3 +10,4 @@ export * from './repositories/violation.repository.js';
 export * from './repositories/accident.repository.js';
 export * from './repositories/chunk.repository.js';
 export * from './repositories/risk.repository.js';
+export * from './repositories/cfr.repository.js';

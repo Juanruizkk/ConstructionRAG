@@ -8,6 +8,7 @@ const THRESHOLD = 0.35; // cosine-similarity floor (config-tunable)
 export interface IncidentHit {
   summary_nr: number; event_date: string | null; text: string;
   similarity: number; contractor_ids: number[];
+  rel_insp_nr: number | null; // a related inspection (for a working osha.gov link)
 }
 
 export class IncidentService {
@@ -24,12 +25,17 @@ export class IncidentService {
     // With a contractor filter: exact filtered scan (small set; HNSW could drop matches).
     // Global: the HNSW index serves the ORDER BY. similarity = 1 - cosine distance.
     const rows = await this.deps.db.execute(sql`
-      SELECT summary_nr, event_date, text, contractor_ids,
-             1 - (embedding <=> ${vecLit}::vector) AS similarity
-      FROM accident_chunk
-      WHERE embedding IS NOT NULL
-        ${contractorId ? sql`AND contractor_ids @> ARRAY[${contractorId}]::int[]` : sql``}
-      ORDER BY embedding <=> ${vecLit}::vector
+      SELECT ac.summary_nr, ac.event_date, ac.text, ac.contractor_ids,
+             1 - (ac.embedding <=> ${vecLit}::vector) AS similarity,
+             (SELECT ai.rel_insp_nr FROM accident_injury ai
+                JOIN inspection i ON i.activity_nr = ai.rel_insp_nr
+                WHERE ai.summary_nr = ac.summary_nr
+                  ${contractorId ? sql`AND i.contractor_id = ${contractorId}` : sql``}
+                LIMIT 1) AS rel_insp_nr
+      FROM accident_chunk ac
+      WHERE ac.embedding IS NOT NULL
+        ${contractorId ? sql`AND ac.contractor_ids @> ARRAY[${contractorId}]::int[]` : sql``}
+      ORDER BY ac.embedding <=> ${vecLit}::vector
       LIMIT ${k}`);
     return (rows as unknown as IncidentHit[]).filter((h) => Number(h.similarity) >= THRESHOLD);
   }
