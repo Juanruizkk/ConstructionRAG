@@ -3,3 +3,6 @@ dist/
 data/raw/
 .env
 *.local
+ssi-data.sql
+docs/
+dol-api-user-guide.pdf
