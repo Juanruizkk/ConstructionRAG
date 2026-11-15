@@ -1,0 +1,20 @@
+# Never copy host node_modules into the image — the Linux container must install
+# its own (Windows-created symlinks break pnpm's linking and tsc/vite go missing).
+**/node_modules
+node_modules
+
+# Build artifacts and VCS
+**/dist
+dist
+.git
+.gitignore
+
+# Local-only data (the DB seed is bind-mounted from the repo clone, not baked in)
+data/raw
+
+# Env + logs
+.env
+.env.*
+!.env.example
+!.env.prod.example
+*.log
