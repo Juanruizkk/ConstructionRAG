@@ -27,8 +27,8 @@ services:
       DATABASE_URL: postgres://ssi:${POSTGRES_PASSWORD:-ssi}@db:5432/ssi
       GROQ_API_KEY: ${GROQ_API_KEY}
       GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
-      # DB is pre-seeded and DOL isn't reachable here, so don't fire per-sub enrichment.
-      ENRICH_ON_ADD: "0"
+      # DOL key so adding a sub triggers live background enrichment (rate-limited, best-effort).
+      API_KEY_ODP: ${API_KEY_ODP}
       PORT: "3001"
     depends_on:
       db:
