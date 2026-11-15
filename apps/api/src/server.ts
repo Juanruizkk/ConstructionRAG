@@ -32,7 +32,8 @@ export function buildServer() {
     await bids.addContractor(id, body);
     // Kick off enrichment in the background (DOL is rate-limited, so this can take a while).
     // The row returns now as "History not loaded"; coverage flips on a later refresh once it completes.
-    if (body.contractorId != null) {
+    // Disabled in prod (ENRICH_ON_ADD=0) when the DB is pre-seeded and DOL isn't reachable.
+    if (body.contractorId != null && process.env.ENRICH_ON_ADD !== '0') {
       void bids.enrichContractor(body.contractorId).catch((e) => app.log.warn({ err: e }, 'enrichContractor failed (rate limit?)'));
     }
     return (await bids.getBid(id)).map(toBidRowDto);
