@@ -44,6 +44,15 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    # `default` keeps web talking to api/db; `dokploy-network` lets Traefik route the domain in.
+    networks:
+      - default
+      - dokploy-network
 
 volumes:
   ssi_pgdata:
+
+networks:
+  # Shared ingress network created by Dokploy; Traefik lives here and routes the domain.
+  dokploy-network:
+    external: true
