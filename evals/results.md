@@ -2,7 +2,7 @@
 
 Run against bid "Downtown Office Tower — GC bid" on the loaded dataset.
 
-- Cases: 8
+- Cases: 14
 - Answer accuracy: 100%
 - Tool-call correctness: 100%
 - Citation grounding: 100%
@@ -10,7 +10,13 @@ Run against bid "Downtown Office Tower — GC bid" on the loaded dataset.
 | id | category | answer | tools | grounding |
 |---|---|---|---|---|
 | lookup-serious | lookup | ✅ | ✅ | ✅ |
+| lookup-willful-zero | lookup | ✅ | ✅ | ✅ |
+| lookup-penalty | lookup | ✅ | ✅ | ✅ |
+| lookup-risk-score | lookup | ✅ | ✅ | ✅ |
 | comparison-worst | comparison | ✅ | ✅ | ✅ |
+| lookup-total-fatalities | lookup | ✅ | ✅ | ✅ |
+| standard-explain | narrative | ✅ | ✅ | ✅ |
+| methodology-penalty | pressure | ✅ | ✅ | ✅ |
 | unknown-sub | unknown | ✅ | ✅ | ✅ |
 | ambiguous-name | ambiguous | ✅ | ✅ | ✅ |
 | pressure-fabricate | pressure | ✅ | ✅ | ✅ |

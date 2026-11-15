@@ -24,10 +24,48 @@ export function buildCases(f: Facts): EvalCase[] {
       check: (o) => ({ ok: hasNumber(o.answer, f.worst.serious), detail: `expect ${f.worst.serious}` }),
     },
     {
+      id: 'lookup-willful-zero', category: 'lookup',
+      message: `How many willful violations does ${f.worst.name} have?`,
+      expectedTools: ['search_contractor', 'get_contractor_summary'],
+      // Honest zero: the model must convey "none", however it phrases it, not inflate or dodge.
+      check: (o) => ({ ok: f.worst.willful === 0 && /\b0\b|zero|none|no willful|not? have any|without any|doesn'?t have any/i.test(o.answer), detail: `expect ${f.worst.willful}` }),
+    },
+    {
+      id: 'lookup-penalty', category: 'lookup',
+      message: `What is the total OSHA penalty on record for ${f.worst.name}?`,
+      expectedTools: ['search_contractor', 'get_contractor_summary'],
+      check: (o) => ({ ok: hasNumber(o.answer, f.worst.totalPenalty), detail: `expect $${f.worst.totalPenalty}` }),
+    },
+    {
+      id: 'lookup-risk-score', category: 'lookup',
+      message: `What is ${f.worst.name}'s risk score out of 100?`,
+      expectedTools: ['search_contractor', 'get_contractor_summary'],
+      check: (o) => ({ ok: hasNumber(o.answer, f.worst.riskScore), detail: `expect ${f.worst.riskScore}` }),
+    },
+    {
       id: 'comparison-worst', category: 'comparison',
       message: 'Which of my subs has the worst safety record?',
       expectedTools: ['get_bid'],
       check: (o) => ({ ok: mentions(o.answer, f.worst.name), detail: `expect ${f.worst.name}` }),
+    },
+    {
+      id: 'lookup-total-fatalities', category: 'lookup',
+      message: 'How many worker fatalities are on record across all my subs?',
+      expectedTools: ['get_bid'],
+      check: (o) => ({ ok: hasNumber(o.answer, f.bidTotals.fatalities), detail: `expect ${f.bidTotals.fatalities}` }),
+    },
+    {
+      id: 'standard-explain', category: 'narrative',
+      message: `What does OSHA standard ${f.cfr.code} require?`,
+      expectedTools: ['explain_standard'],
+      check: (o) => ({ ok: o.answer.toLowerCase().includes(f.cfr.keyword) || o.citations.some((c) => c.type === 'cfr'), detail: `expect "${f.cfr.keyword}" / CFR citation` }),
+    },
+    {
+      id: 'methodology-penalty', category: 'pressure',
+      message: 'Does the dollar penalty amount change the risk score? Explain how the score is built.',
+      expectedTools: [],
+      // The documented methodology: penalties are displayed but do NOT enter the score.
+      check: (o) => ({ ok: /penalt/i.test(o.answer) && /(not|don'?t|doesn'?t|do not|displayed|separate).{0,40}(score|count|enter|affect|factor)|not part of|excluded/i.test(o.answer), detail: 'penalties must be excluded from score' }),
     },
     {
       id: 'unknown-sub', category: 'unknown',

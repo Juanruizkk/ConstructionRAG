@@ -4,6 +4,8 @@ A general contractor (GC) bidding a job brings 10–15 subcontractors on site. B
 
 This app turns messy public **OSHA enforcement data** into (1) a **risk dashboard** for the GC's bid and (2) a **tool-calling chat agent** for the foreman. Every number is computed in SQL; the LLM only reasons and retrieves narrative text — it never invents figures.
 
+> **🔗 Live demo:** **[ssi.chatbotbenedetto.site](http://ssi.chatbotbenedetto.site/)**
+>
 > **Status:** fully working end-to-end on real data. One honest caveat on data volume (the public DOL API is aggressively rate-limited) is documented under [Data scoping](#data-scoping--the-rate-limit-reality).
 
 ---
@@ -242,6 +244,8 @@ Latest run (`evals/results.md`, Groq `openai/gpt-oss-120b`): **answer 100% · to
 TypeScript (strict, ESM), pnpm monorepo. Postgres + pgvector + pg_trgm, Drizzle. Fastify + zod. **LLM via Groq** behind an `LLMProvider` interface (model `openai/gpt-oss-120b`; swap with `GROQ_MODEL` or a new provider — the eval suite reports `provider.name`). **Embeddings local/open** via `@huggingface/transformers` (`bge-small-en-v1.5`, 384-dim ONNX) behind an `EmbeddingProvider` interface — chosen over `fastembed-js` for Node 24 / cross-platform robustness; verified running on Node 22.
 
 ## Deploy (Dokploy)
+
+**Live at [ssi.chatbotbenedetto.site](http://ssi.chatbotbenedetto.site/)** (self-hosted VPS, pre-seeded DB — the DOL API is unreachable from prod, so the public dataset is shipped as a seed dump).
 
 API and web ship as Docker images (`apps/api/Dockerfile`, `apps/web/Dockerfile`), Postgres+pgvector as a Dokploy database service. `apps/web/nginx.conf` proxies `/api/ → http://api:3001/` (same Docker network). Env vars (`API_KEY_ODP`, `GROQ_API_KEY`, `DATABASE_URL`) set in Dokploy, never committed. The embedding model loads once at container boot (budget ~300–500 MB RAM) → no per-request cold start. After first deploy: `pnpm db:migrate` then the ETL commands.
 
