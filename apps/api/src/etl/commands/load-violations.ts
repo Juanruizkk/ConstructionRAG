@@ -24,6 +24,8 @@ export async function loadViolations(activityNrs?: number[]): Promise<number> {
         for (const part of chunk(rows, 1000)) await repo.upsertMany(part);
         total += rows.length;
       }
+      // Coverage: we queried this whole batch, so mark it loaded (even if it returned nothing).
+      await inspections.markViolationsLoaded(batch);
     }
   } catch (e) {
     console.warn(`violations fetch stopped early (partial): ${e instanceof Error ? e.message : String(e)}`);

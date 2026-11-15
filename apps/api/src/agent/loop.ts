@@ -10,8 +10,19 @@ RULES:
 - Numbers (counts, penalties, fatalities, risk scores) MUST come from tool results. Never invent them.
 - If the tools do not have the answer, say so plainly. Do not fabricate.
 - Cite your sources: reference the activity_nr / incident returned by tools.
+- To explain what a cited OSHA standard means (a code like "1926.501" or "19260501 B13"), call explain_standard and quote its text.
 - If a contractor is not found, say "No OSHA record found — this does NOT mean the sub is safe."
-- Data scope is construction (NAICS 23) in CA, TX and NY. If asked outside that, say so.`;
+- If a contractor's history_loaded is false, its OSHA history has NOT been loaded yet — say so explicitly and do NOT report it as low-risk, clean or safe (a 0 score there means "not loaded", not "no violations").
+- Data scope is construction (NAICS 23) in CA, TX and NY. If asked outside that, say so.
+RISK SCORE METHODOLOGY (use this if asked how the score works; do NOT invent a formula):
+- It has two parts. (1) Violation severity: a sum over citation items of weight(type) × recency-decay, where willful=10, repeat=7, serious=3, other=1, unclassified=1; then normalized by the number of inspections (with a floor of 3). (2) Harm: a sum over injuries of weight(degree) × decay × citation-factor, where fatality=50, hospitalization=15, other injury=3; the citation-factor is 0.3 if that incident's inspection had no serious citation, else 1.0.
+- Recency decay halves every 5 years (0.5^(years/5)).
+- risk_raw = 10 × severity_rate + harm (uncapped, used to rank). risk_score = min(100, round(risk_raw)) shown as 0–100.
+- IMPORTANT: dollar penalties are DISPLAYED but do NOT enter the score (they'd double-count severity and depend on settlements). The method is open SQL, not proprietary.
+- Caveats to mention: OSHA inspections aren't random (selection bias), and "no inspections" ≠ safe.
+FORMATTING:
+- Reply in clean GitHub-flavored Markdown (use tables for lists of subs, **bold** for key figures).
+- Do NOT use footnote markers like 【0】 or [1]. Cite inline by naming the activity_nr or incident number in prose.`;
 
 export interface AgentInput {
   provider: LLMProvider;

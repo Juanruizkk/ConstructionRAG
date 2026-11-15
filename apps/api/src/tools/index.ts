@@ -2,11 +2,13 @@ import { z } from 'zod';
 import { ContractorService } from '../services/contractor.service.js';
 import { IncidentService } from '../services/incident.service.js';
 import { BidService } from '../services/bid.service.js';
+import { StandardService } from '../services/standard.service.js';
 import { oshaUrl, type Citation, type Tool } from './types.js';
 
 const contractor = new ContractorService();
 const incidents = new IncidentService();
 const bids = new BidService();
+const standards = new StandardService();
 
 export function buildTools(bidId: number): Tool[] {
   return [
@@ -51,8 +53,28 @@ export function buildTools(bidId: number): Tool[] {
       schema: z.object({ query: z.string(), contractor_id: z.number().int().optional() }),
       async execute(a) {
         const hits = await incidents.search(a.query, a.contractor_id);
-        const cits: Citation[] = hits.map((h) => ({ type: 'incident', summary_nr: h.summary_nr, url: `https://www.osha.gov/ords/imis/accidentsearch.accident_detail?id=${h.summary_nr}` }));
+        // Link to the related OSHA inspection page (reliable) rather than the flaky accident_detail page.
+        const cits: Citation[] = hits.map((h) => ({
+          type: 'incident',
+          summary_nr: h.summary_nr,
+          ...(h.rel_insp_nr ? { activity_nr: h.rel_insp_nr } : {}),
+          url: h.rel_insp_nr
+            ? oshaUrl(h.rel_insp_nr)
+            : `https://www.osha.gov/ords/imis/accidentsearch.accident_detail?id=${h.summary_nr}`,
+        }));
         return { data: hits.length ? hits : 'no relevant incidents', citations: cits };
+      },
+    },
+    {
+      name: 'explain_standard',
+      description: 'Explain a cited OSHA standard code (e.g. "1926.501" or "19260501 B13") using the official 29 CFR text. Use this when the user asks what a cited standard means.',
+      schema: z.object({ standard_code: z.string() }),
+      async execute(a) {
+        const r = await standards.explain(a.standard_code);
+        const cits: Citation[] = r.section_code && r.url
+          ? [{ type: 'cfr', section_code: r.section_code, url: r.url }]
+          : [];
+        return { data: r, citations: cits };
       },
     },
   ];

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { addToBid, searchContractor, type SearchHit } from '../lib/api.js';
 
-export function AddSub({ bidId, onAdded }: { bidId: number; onAdded: () => void }) {
+export function AddSub({ bidId, onAdded }: { bidId: number; onAdded: (enrichingContractorId?: number) => void }) {
   const [name, setName] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searched, setSearched] = useState(false);
@@ -12,7 +12,7 @@ export function AddSub({ bidId, onAdded }: { bidId: number; onAdded: () => void 
   }
   async function add(contractorId: number) {
     await addToBid(bidId, { contractorId });
-    onAdded();
+    onAdded(contractorId); // matched → triggers background enrichment
   }
   async function addNotFound() {
     if (!name.trim()) return;
@@ -20,7 +20,7 @@ export function AddSub({ bidId, onAdded }: { bidId: number; onAdded: () => void 
     setResults([]);
     setSearched(false);
     setName('');
-    onAdded();
+    onAdded(); // not_found → nothing to enrich
   }
 
   return (
